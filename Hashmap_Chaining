@@ -1,0 +1,124 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define TABLE_SIZE 100  // Size of the hash table
+
+// Define a node structure for the linked list (bucket)
+typedef struct Node {
+    int key;
+    struct Node *next;
+} Node;
+
+// Define a simple hash set structure
+typedef struct HashSet {
+    Node **table;  // Array of pointers to linked lists (buckets)
+} HashSet;
+
+// Hash function: simple modulus hash function
+int hash(int key) {
+    return key % TABLE_SIZE;
+}
+
+// Initialize the hash set
+void initSet(HashSet *set) {
+    set->table = (Node**)malloc(TABLE_SIZE * sizeof(Node*));
+
+    // Initialize all buckets as empty (NULL)
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        set->table[i] = NULL;
+    }
+}
+
+// Create a new node
+Node* createNode(int key) {
+    Node *newNode = (Node*)malloc(sizeof(Node));
+    newNode->key = key;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Insert an element into the set
+void insert(HashSet *set, int key) {
+    int index = hash(key);
+    
+    // Check if the key already exists in the bucket
+    Node *current = set->table[index];
+    while (current != NULL) {
+        if (current->key == key) {
+            return;  // Key already exists, no need to insert
+        }
+        current = current->next;
+    }
+
+    // Create a new node and insert it at the beginning of the list
+    Node *newNode = createNode(key);
+    newNode->next = set->table[index];
+    set->table[index] = newNode;
+}
+
+// Check if an element exists in the set
+int contains(HashSet *set, int key) {
+    int index = hash(key);
+    
+    // Search through the linked list at the hashed index
+    Node *current = set->table[index];
+    while (current != NULL) {
+        if (current->key == key) {
+            return 1;  // Found the key
+        }
+        current = current->next;
+    }
+
+    return 0;  // Key not found
+}
+
+// Print the elements in the hash set
+void printSet(HashSet *set) {
+    printf("HashSet: { ");
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Node *current = set->table[i];
+        while (current != NULL) {
+            printf("%d ", current->key);
+            current = current->next;
+        }
+    }
+    printf("}\n");
+}
+
+// Free the memory used by the hash set
+void freeSet(HashSet *set) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Node *current = set->table[i];
+        while (current != NULL) {
+            Node *temp = current;
+            current = current->next;
+            free(temp);
+        }
+    }
+    free(set->table);
+}
+
+int main() {
+    // Create and initialize the hash set
+    HashSet set;
+    initSet(&set);
+
+    // Example: Inserting elements into the hash set
+    insert(&set, 10);
+    insert(&set, 20);
+    insert(&set, 30);
+    insert(&set, 10);  // Duplicate, should not be added
+    insert(&set, 40);
+
+    // Print the hash set
+    printSet(&set);
+
+    // Check if certain elements exist in the hash set
+    printf("Contains 20: %d\n", contains(&set, 20));  // Should return 1 (true)
+    printf("Contains 50: %d\n", contains(&set, 50));  // Should return 0 (false)
+
+    // Free the allocated memory
+    freeSet(&set);
+
+    return 0;
+}
